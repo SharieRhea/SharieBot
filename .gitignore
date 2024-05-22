@@ -1,4 +1,8 @@
 # ignore user specific environment variables such as access token
 .env
+
 venv/
-__pycache__
+__pycache__/
+
+# ignore OBS text files
+resources/

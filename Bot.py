@@ -3,7 +3,7 @@ from twitchio.ext import commands
 class Bot(commands.Bot):
 
     def __init__(self, accessToken: str, prefix: str, channel: str):
-        # prefix is the default command indicator, e.g. "!command"
+        # prefix is the default command indicator, e.g. "!"
         super().__init__(token = accessToken, prefix = prefix, initial_channels = [channel])
 
     async def event_ready(self):
@@ -27,7 +27,7 @@ class Bot(commands.Bot):
     async def socials(self, context: commands.Context):
         await context.send(f"/me Check out all of Sharie's socials here: https://linktr.ee/shariemakesart")
 
-    @commands.command(name = "faq", aliases = ["FAQ"])
+    @commands.command(aliases = ["FAQ"])
     async def faq(self, context: commands.Context):
         await context.send(f"The answer to all your questions... https://tinyurl.com/faqshariemakesart")
 
