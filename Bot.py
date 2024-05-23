@@ -1,10 +1,14 @@
+import asyncio
 from twitchio.ext import commands
+from OBSClient import OBSClient
 
 class Bot(commands.Bot):
 
-    def __init__(self, accessToken: str, prefix: str, channel: str):
+    def __init__(self, accessToken: str, prefix: str, channel: str, obsClient: OBSClient):
         # prefix is the default command indicator, e.g. "!"
         super().__init__(token = accessToken, prefix = prefix, initial_channels = [channel])
+        self.CHANNEL = channel
+        self.obsClient = obsClient
 
     async def event_ready(self):
         print(f"Logged in as as {self.nick}")
@@ -43,3 +47,14 @@ class Bot(commands.Bot):
     @commands.command()
     async def unlurk(self, context: commands.Context):
         await context.send(f"Welcome back @{context.author.name}!")
+
+    # broadcaster only commands
+    @commands.command()
+    async def adbreak(self, context: commands.Context):
+        if context.author.name != self.CHANNEL:
+            return
+        self.obsClient.switchToAdsScene()
+        # ad breaks are set to 90 seconds
+        await asyncio.sleep(90)
+        self.obsClient.switchToContentScene()
+
