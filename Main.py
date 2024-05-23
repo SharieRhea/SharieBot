@@ -24,7 +24,14 @@ def main():
     eventSubClient = eventsub.EventSubWSClient(eventSubBot)
     bot.loop.run_until_complete(eventSubBot.__ainit__(eventSubClient))
 
+    user = bot.create_user(int(BROADCASTER_ID), CHANNEL)
+    bot.loop.run_until_complete(getFollowerCount(user))
+
     bot.run()
+
+async def getFollowerCount(user):
+    count = await user.fetch_channel_follower_count()
+    print(count)
 
 if __name__ == "__main__":
     main()

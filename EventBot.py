@@ -1,15 +1,17 @@
+import twitchio
 from twitchio.ext import commands
 from twitchio.ext import eventsub
 from twitchio.ext.eventsub.websocket import EventSubWSClient
 
 class EventBot(commands.Bot):
-    def __init__(self, channel: str, broadcasterID: str, broadcasterToken: str, moderatorID: str, moderatorToken: str):
+    def __init__(self, channel: str, broadcasterID: str, broadcasterToken: str, moderatorID: str, moderatorToken: str, user: twitchio.PartialUser):
         super().__init__(token = broadcasterToken, prefix = "!", initial_channels = [channel])
         self.channel = channel
         self.broadcasterID = broadcasterID
         self.broadcasterToken = broadcasterToken
         self.moderatorID = moderatorID
         self.moderatorToken = moderatorToken
+        self.user = user
 
     async def __ainit__(self, eventSubClient: EventSubWSClient):
         try:
@@ -32,19 +34,32 @@ class EventBot(commands.Bot):
     async def event_eventsub_notification_followV2(self, event: eventsub.NotificationEvent):
         if not isinstance(event.data, eventsub.ChannelFollowData):
             return
+
+        # write username to file for OBS to read
         username = event.data.user.name
         if username is None:
             return
-        with open("resources/recentFollwer.txt", "w") as file:
+        with open("resources/recentFollower.txt", "w") as file:
             file.write(username)
+
+        # write current follower count to file for OBS to read
+        count = await self.user.fetch_channel_follower_count()
+        with open("resouces/followerCount.txt", "w") as file:
+            file.write(str(count))
 
     async def event_eventsub_notification_subscription(self, event: eventsub.NotificationEvent):
         if not isinstance(event.data, eventsub.ChannelSubscribeData):
             return
+        
+        # write username to file for OBS to read
         username = event.data.user.name
         if username is None:
             return
         with open("resouces/recentSubscriber.txt", "w") as file:
             file.write(username)
 
-
+        # write current subscriber count to file for OBS to read
+        count = len(await self.user.fetch_subscriptions(token = self.broadcasterToken))
+        with open("resources/subscriberCount.txt", "w") as file:
+            file.write(str(count))
+        
