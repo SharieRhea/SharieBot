@@ -3,12 +3,14 @@ from twitchio.ext import commands
 from OBSClient import OBSClient
 
 class Bot(commands.Bot):
+    """Represents a bot to respond to commands in Twitch chat."""
 
-    def __init__(self, accessToken: str, prefix: str, channel: str, obsClient: OBSClient):
+    def __init__(self, access_token: str, prefix: str, channel: str, obs_client: OBSClient):
+        """Initializes the bot with the specified token and joins the specified channel."""
         # prefix is the default command indicator, e.g. "!"
-        super().__init__(token = accessToken, prefix = prefix, initial_channels = [channel])
-        self.CHANNEL = channel
-        self.obsClient = obsClient
+        super().__init__(token = access_token, prefix = prefix, initial_channels = [channel])
+        self.channel = channel
+        self.obs_client = obs_client
 
     async def event_ready(self):
         print(f"Logged in as as {self.nick}")
@@ -49,19 +51,19 @@ class Bot(commands.Bot):
 
     @commands.command(name = "commands")
     async def get_commands(self, context: commands.Context):
-        commandsList = []
+        commands_list = []
         for command in self.commands.keys():
             if command != "adbreak" and command != "commands":
-                commandsList.append(command)
-        await context.send("Current commands: " + ", ".join(commandsList))
+                commands_list.append(command)
+        await context.send("Current commands: " + ", ".join(commands_list))
 
     # broadcaster only commands
     @commands.command()
     async def adbreak(self, context: commands.Context):
-        if context.author.name != self.CHANNEL:
+        if context.author.name != self.channel:
             return
-        self.obsClient.switchToAdsScene()
+        self.obs_client.switch_to_ads_scene()
         # ad breaks are set to 90 seconds
         await asyncio.sleep(90)
-        self.obsClient.switchToContentScene()
+        self.obs_client.switch_to_content_scene()
 
