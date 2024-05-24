@@ -12,7 +12,6 @@ class Bot(commands.Bot):
 
     async def event_ready(self):
         print(f"Logged in as as {self.nick}")
-        print(f"User id is {self.user_id}")
 
     # social related commands
     @commands.command()
@@ -47,6 +46,14 @@ class Bot(commands.Bot):
     @commands.command()
     async def unlurk(self, context: commands.Context):
         await context.send(f"Welcome back @{context.author.name}!")
+
+    @commands.command(name = "commands")
+    async def get_commands(self, context: commands.Context):
+        commandsList = []
+        for command in self.commands.keys():
+            if command != "adbreak" and command != "commands":
+                commandsList.append(command)
+        await context.send("Current commands: " + ", ".join(commandsList))
 
     # broadcaster only commands
     @commands.command()

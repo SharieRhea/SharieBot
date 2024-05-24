@@ -19,19 +19,13 @@ def main():
 
     # register a bot under the moderator account
     bot = Bot(MODERATOR_TOKEN, "!", CHANNEL, obsClient)
+    #user = bot.create_user(int(BROADCASTER_ID), CHANNEL)
     # register a bot under the broadcaster account for handling events
     eventSubBot = EventBot(CHANNEL, BROADCASTER_ID, BROADCASTER_TOKEN, MODERATOR_ID, MODERATOR_TOKEN) 
     eventSubClient = eventsub.EventSubWSClient(eventSubBot)
     bot.loop.run_until_complete(eventSubBot.__ainit__(eventSubClient))
 
-    user = bot.create_user(int(BROADCASTER_ID), CHANNEL)
-    bot.loop.run_until_complete(getFollowerCount(user))
-
     bot.run()
-
-async def getFollowerCount(user):
-    count = await user.fetch_channel_follower_count()
-    print(count)
 
 if __name__ == "__main__":
     main()
