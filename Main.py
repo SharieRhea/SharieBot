@@ -19,6 +19,7 @@ def main():
 
     # register a bot under the moderator account
     bot = Bot(MODERATOR_TOKEN, "!", CHANNEL, obs_client)
+    bot.loop.run_until_complete(bot.__ainit__())
     # register a bot under the broadcaster account for handling events
     event_sub_bot = EventBot(CHANNEL, BROADCASTER_ID, BROADCASTER_TOKEN)
     event_sub_client = eventsub.EventSubWSClient(event_sub_bot)

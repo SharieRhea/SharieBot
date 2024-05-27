@@ -1,4 +1,5 @@
 import asyncio
+import aiosqlite as sql
 from twitchio.ext import commands
 from OBSClient import OBSClient
 
@@ -11,6 +12,10 @@ class Bot(commands.Bot):
         super().__init__(token = access_token, prefix = prefix, initial_channels = [channel])
         self.channel = channel
         self.obs_client = obs_client
+
+    async def __ainit__(self):
+        """Initializes a database connection."""
+        self.database = await sql.connect("resources/database.db")
 
     async def event_ready(self):
         print(f"Logged in as as {self.nick}")
@@ -35,6 +40,33 @@ class Bot(commands.Bot):
     @commands.command(aliases = ["FAQ"])
     async def faq(self, context: commands.Context):
         await context.send(f"The answer to all your questions... https://tinyurl.com/faqshariemakesart")
+
+    # database related commands
+    @commands.command()
+    async def quote(self, context: commands.Context, index: int | None):
+        # select a random quote if no number is provided
+        if index is None:
+            cursor = await self.database.execute("SELECT text, date FROM quote ORDER BY RANDOM() LIMIT 1;")
+        else:    
+            cursor = await self.database.execute("SELECT text, date FROM quote WHERE id = ?;", [index])
+        data = await cursor.fetchone()
+
+        # handle out of range indices
+        if data is None:
+            await context.send("Quote not found!")
+            return
+
+        await context.send(f'"{data[0]}" - {data[1]}')
+
+    @commands.command()
+    async def addquote(self, context: commands.Context, text: str):
+        if context.author.name != self.channel:
+            return
+
+        await self.database.execute("INSERT INTO quote(text, date) VALUES(?, date('now'));", [text])
+        await self.database.commit()
+
+        await context.send("Quote added!")
 
     # info related commands
     @commands.command()
@@ -67,3 +99,11 @@ class Bot(commands.Bot):
         await asyncio.sleep(90)
         self.obs_client.switch_to_content_scene()
 
+    # override error handling
+    async def event_command_error(self, context: commands.Context, error: Exception):
+        if isinstance(error, commands.CommandNotFound):
+            return
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await context.send(f"@{context.author.name} you're missing an argument: {error.name}")
+        else:
+            print(error)
