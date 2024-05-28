@@ -12,6 +12,7 @@ class Bot(commands.Bot):
         super().__init__(token = access_token, prefix = prefix, initial_channels = [channel])
         self.channel = channel
         self.obs_client = obs_client
+        self.broadcaster_only = ["adbreak", "addquote", "commands"]
 
     async def __ainit__(self):
         """Initializes a database connection."""
@@ -58,20 +59,23 @@ class Bot(commands.Bot):
 
         await context.send(f'"{data[0]}" - {data[1]}')
 
-    @commands.command()
-    async def addquote(self, context: commands.Context, text: str):
-        if context.author.name != self.channel:
-            return
-
-        await self.database.execute("INSERT INTO quote(text, date) VALUES(?, date('now'));", [text])
-        await self.database.commit()
-
-        await context.send("Quote added!")
-
     # info related commands
     @commands.command()
     async def font(self, context: commands.Context):
         await context.send(f"@{context.author.name} JetBrains Mono")
+
+    @commands.command(aliases = ["colorscheme"])
+    async def theme(self, context: commands.Context):
+        # check the last line of the init.lua for the theme
+        with open("/home/sharie/.config/nvim/init.lua", "rb") as file:
+            # seek to the very end of the file
+            file.seek(0, 2)
+            # move backwards until a newline is found
+            while file.read(1) != b'\n':
+                file.seek(-2, 1)
+            line = file.readline()
+            theme = line.decode().split("\"")[1]
+            await context.send(f"@{context.author.name} {theme}")
 
     @commands.command()
     async def lurk(self, context: commands.Context):
@@ -85,7 +89,7 @@ class Bot(commands.Bot):
     async def get_commands(self, context: commands.Context):
         commands_list = []
         for command in self.commands.keys():
-            if command != "adbreak" and command != "commands":
+            if command not in self.broadcaster_only:
                 commands_list.append(command)
         await context.send("Current commands: " + ", ".join(commands_list))
 
@@ -94,10 +98,21 @@ class Bot(commands.Bot):
     async def adbreak(self, context: commands.Context):
         if context.author.name != self.channel:
             return
+
         self.obs_client.switch_to_ads_scene()
         # ad breaks are set to 90 seconds
         await asyncio.sleep(90)
         self.obs_client.switch_to_content_scene()
+
+    @commands.command()
+    async def addquote(self, context: commands.Context, text: str):
+        if context.author.name != self.channel:
+            return
+
+        await self.database.execute("INSERT INTO quote(text, date) VALUES(?, date('now'));", [text])
+        await self.database.commit()
+
+        await context.send("Quote added!")
 
     # override error handling
     async def event_command_error(self, context: commands.Context, error: Exception):

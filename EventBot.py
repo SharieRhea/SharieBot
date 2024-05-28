@@ -14,7 +14,7 @@ class EventBot(commands.Bot):
         self.user = self.create_user(int(broadcaster_id), channel)
 
     async def __ainit__(self, eventsub_client: EventSubWSClient):
-        """Updates follwer and sub counts and subscribes to eventsub events."""
+        """Updates follower and sub counts and subscribes to eventsub events."""
         # write current follower count to file for OBS to read
         count = await self.user.fetch_channel_follower_count()
         with open("resources/followerCount.txt", "w") as file:
