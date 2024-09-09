@@ -1,9 +1,11 @@
 import os
 from dotenv import load_dotenv
 from twitchio.ext import eventsub
+from threading import Thread
 from Bot import Bot
 from EventBot import EventBot
 from OBSClient import OBSClient
+from MusicHandler import loop
 
 def main():
     # set up environment variables
@@ -24,6 +26,10 @@ def main():
     event_sub_bot = EventBot(CHANNEL, BROADCASTER_ID, BROADCASTER_TOKEN)
     event_sub_client = eventsub.EventSubWSClient(event_sub_bot)
     bot.loop.run_until_complete(event_sub_bot.__ainit__(event_sub_client))
+
+    # start up a thread for displaying the current song from rhythmbox
+    thread = Thread(target = loop)
+    thread.start()
 
     # begin main event loop
     bot.run()
