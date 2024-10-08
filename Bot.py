@@ -98,7 +98,7 @@ class Bot(commands.Bot):
     @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.channel)
     @commands.command()
     async def idiot(self, context: commands.Context):
-        if self.idiot_genius_counter < -5:
+        if self.idiot_genius_counter <= -5:
             await context.send("Maximum idiot levels achieved! Maybe it's time to stop coding for the day...")
             self.idiot_genius_counter = 0
             self.update_idiot_genius_bar()
@@ -110,7 +110,7 @@ class Bot(commands.Bot):
     @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.channel)
     @commands.command()
     async def genius(self, context: commands.Context):
-        if self.idiot_genius_counter > 5:
+        if self.idiot_genius_counter >= 5:
             await context.send("Maximum genius levels achieved! Time to apply to Google")
             self.idiot_genius_counter = 0
             self.update_idiot_genius_bar()
