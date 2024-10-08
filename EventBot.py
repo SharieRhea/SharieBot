@@ -23,7 +23,7 @@ class EventBot(commands.Bot):
         # write current subscriber count to file for OBS to read
         count = len(await self.user.fetch_subscriptions(token = self.broadcaster_token))
         with open("resources/subscriberCount.txt", "w") as file:
-            file.write(str(count))
+            file.write(str(count - 2))
        
         # subscribe to event notifications
         try:
@@ -73,5 +73,5 @@ class EventBot(commands.Bot):
         # write current subscriber count to file for OBS to read
         count = len(await self.user.fetch_subscriptions(token = self.broadcaster_token))
         with open("resources/subscriberCount.txt", "w") as file:
-            file.write(str(count))
+            file.write(str(count - 2))
         

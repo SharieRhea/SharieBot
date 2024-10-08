@@ -1,3 +1,4 @@
+import subprocess
 import asyncio
 import aiosqlite as sql
 from twitchio.ext import commands
@@ -13,6 +14,7 @@ class Bot(commands.Bot):
         self.channel = channel
         self.obs_client = obs_client
         self.broadcaster_only = ["adbreak", "addquote", "commands"]
+        self.idiot_genius_counter = 0
 
     async def __ainit__(self):
         """Initializes a database connection."""
@@ -93,10 +95,46 @@ class Bot(commands.Bot):
                 commands_list.append(command)
         await context.send("Current commands: " + ", ".join(commands_list))
 
+    @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.channel)
+    @commands.command()
+    async def idiot(self, context: commands.Context):
+        if self.idiot_genius_counter < -5:
+            await context.send("Maximum idiot levels achieved! Maybe it's time to stop coding for the day...")
+            self.idiot_genius_counter = 0
+            self.update_idiot_genius_bar()
+            return
+        self.idiot_genius_counter -= 1
+        self.update_idiot_genius_bar()
+        await context.send(f"@{context.author.name} has changed the idiot/genius counter to {self.idiot_genius_counter}!")
+
+    @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.channel)
+    @commands.command()
+    async def genius(self, context: commands.Context):
+        if self.idiot_genius_counter > 5:
+            await context.send("Maximum genius levels achieved! Time to apply to Google")
+            self.idiot_genius_counter = 0
+            self.update_idiot_genius_bar()
+            return
+        self.idiot_genius_counter += 1
+        self.update_idiot_genius_bar()
+        await context.send(f"@{context.author.name} has changed the idiot/genius counter to {self.idiot_genius_counter}!")
+        
+    # utility command for creating the idiot:genius bar for OBS
+    def update_idiot_genius_bar(self):
+        with open("resources/idiotgenius.txt", "w") as file:
+            file.write("idiot: ")
+            for i in range(-5, 6):
+                if i == self.idiot_genius_counter:
+                    file.write("╋")
+                else:
+                    file.write("━")
+            file.write(" :genius")
+
     # broadcaster only commands
     @commands.command()
     async def adbreak(self, context: commands.Context):
         if context.author.name != self.channel:
+            await context.send("Hey, you're not supposed to do that!")
             return
 
         self.obs_client.switch_to_ads_scene()
@@ -107,12 +145,37 @@ class Bot(commands.Bot):
     @commands.command()
     async def addquote(self, context: commands.Context, text: str):
         if context.author.name != self.channel:
+            await context.send("Hey, you're not supposed to do that!")
             return
 
         await self.database.execute("INSERT INTO quote(text, date) VALUES(?, date('now'));", [text])
         await self.database.commit()
 
         await context.send("Quote added!")
+
+    @commands.command()
+    async def play(self, context: commands.Context):
+        if context.author.name != self.channel:
+            await context.send("Hey, you're not supposed to do that!")
+            return
+    
+        subprocess.run(["rhythmbox-client", "--play"]) 
+
+    @commands.command()
+    async def pause(self, context: commands.Context):
+        if context.author.name != self.channel:
+            await context.send("Hey, you're not supposed to do that!")
+            return
+    
+        subprocess.run(["rhythmbox-client", "--pause"])
+        
+    @commands.command()
+    async def skip(self, context: commands.Context):
+        if context.author.name != self.channel:
+            await context.send("Hey, you're not supposed to do that!")
+            return
+    
+        subprocess.run(["rhythmbox-client", "--next"]) 
 
     # override error handling
     async def event_command_error(self, context: commands.Context, error: Exception):

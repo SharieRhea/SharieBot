@@ -1,5 +1,6 @@
 # ignore user specific environment variables such as access token
 .env
+urls.txt
 
 venv/
 __pycache__/
