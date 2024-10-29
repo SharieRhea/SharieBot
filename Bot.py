@@ -2,6 +2,7 @@ import subprocess
 import asyncio
 import aiosqlite as sql
 from twitchio.ext import commands
+from twitchio.ext import routines
 from OBSClient import OBSClient
 
 class Bot(commands.Bot):
@@ -19,10 +20,18 @@ class Bot(commands.Bot):
     async def __ainit__(self):
         """Initializes a database connection."""
         self.database = await sql.connect("resources/database.db")
+        self.update_idiot_genius_bar()
 
     async def event_ready(self):
         print(f"Logged in as as {self.nick}")
+        # start the routine
+        self.socials_routine.start()
 
+    # send socials message every 30 minutes
+    @routines.routine(seconds=1800.0)
+    async def socials_routine(self):
+        await self.get_channel(self.channel).send(f"/me Check out all of Sharie's socials here: https://linktr.ee/shariemakesart")
+    
     # social related commands
     @commands.command()
     async def discord(self, context: commands.Context):
