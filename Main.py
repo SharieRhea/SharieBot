@@ -5,7 +5,7 @@ from threading import Thread
 from Bot import Bot
 from EventBot import EventBot
 from OBSClient import OBSClient
-from MusicHandler import loop
+from MusicHandler import play
 
 def main():
     # set up environment variables
@@ -27,8 +27,8 @@ def main():
     event_sub_client = eventsub.EventSubWSClient(event_sub_bot)
     bot.loop.run_until_complete(event_sub_bot.__ainit__(event_sub_client))
 
-    # start up a thread for displaying the current song from rhythmbox
-    thread = Thread(target = loop)
+    # start up a thread for playing music
+    thread = Thread(target = play)
     thread.start()
 
     # begin main event loop

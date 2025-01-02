@@ -33,6 +33,7 @@ class EventBot(commands.Bot):
         except Exception as exception:
             print(f"Error subscribing to event: {exception}")
 
+    # TODO: this doesn't seem to be working...
     async def event_eventsub_notification_raid(self, event: eventsub.NotificationEvent):
         if not isinstance(event.data, eventsub.ChannelRaidData):
             return
@@ -51,12 +52,12 @@ class EventBot(commands.Bot):
         username = event.data.user.name
         if username is None:
             return
-        with open("resources/recentFollower.txt", "w") as file:
+        with open("resources/recent_follower.txt", "w") as file:
             file.write(username)
 
         # write current follower count to file for OBS to read
         count = await self.user.fetch_channel_follower_count()
-        with open("resources/followerCount.txt", "w") as file:
+        with open("resources/follower_count.txt", "w") as file:
             file.write(str(count))
 
     async def event_eventsub_notification_subscription(self, event: eventsub.NotificationEvent):
@@ -67,11 +68,10 @@ class EventBot(commands.Bot):
         username = event.data.user.name
         if username is None:
             return
-        with open("resources/recentSubscriber.txt", "w") as file:
+        with open("resources/recent_subscriber.txt", "w") as file:
             file.write(username)
 
         # write current subscriber count to file for OBS to read
         count = len(await self.user.fetch_subscriptions(token = self.broadcaster_token))
-        with open("resources/subscriberCount.txt", "w") as file:
+        with open("resources/subscriber_count.txt", "w") as file:
             file.write(str(count - 2))
-        

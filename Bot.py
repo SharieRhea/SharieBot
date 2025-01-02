@@ -30,7 +30,9 @@ class Bot(commands.Bot):
     # send socials message every 30 minutes
     @routines.routine(seconds=1800.0)
     async def socials_routine(self):
-        await self.get_channel(self.channel).send(f"/me Check out all of Sharie's socials here: https://linktr.ee/shariemakesart")
+        channel = self.get_channel(self.channel)
+        if channel is not None:
+            await channel.send(f"/me Check out all of Sharie's socials here: https://linktr.ee/shariemakesart")
     
     # social related commands
     @commands.command()
@@ -161,30 +163,6 @@ class Bot(commands.Bot):
         await self.database.commit()
 
         await context.send("Quote added!")
-
-    @commands.command()
-    async def play(self, context: commands.Context):
-        if context.author.name != self.channel:
-            await context.send("Hey, you're not supposed to do that!")
-            return
-    
-        subprocess.run(["rhythmbox-client", "--play"]) 
-
-    @commands.command()
-    async def pause(self, context: commands.Context):
-        if context.author.name != self.channel:
-            await context.send("Hey, you're not supposed to do that!")
-            return
-    
-        subprocess.run(["rhythmbox-client", "--pause"])
-        
-    @commands.command()
-    async def skip(self, context: commands.Context):
-        if context.author.name != self.channel:
-            await context.send("Hey, you're not supposed to do that!")
-            return
-    
-        subprocess.run(["rhythmbox-client", "--next"]) 
 
     # override error handling
     async def event_command_error(self, context: commands.Context, error: Exception):

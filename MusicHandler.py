@@ -1,25 +1,43 @@
+import os
 import subprocess
-import time
+import random
 
-def get_song():
-    output = subprocess.run(["rhythmbox-client", "--print-playing"], capture_output = True)
-    return output.stdout.decode("UTF-8").strip()
+class MusicHandler:
+    def __init__(self, directory_path):
+        self.directory_path = directory_path
+        # pull all files from this directory
+        self.songs = []
+        for file in os.listdir(directory_path):
+            self.songs.append(file)
+        # shuffle all the songs
+        random.shuffle(self.songs)
 
-def write_song(song):
-    file = open("resources/currentSong.txt", "w")
-    file.write(f"Music by Gamechops | {song} | ")
-    file.close()
+        # begin
+        self.start()
+    
+    def start(self):
+        # begin an endless loop of playing songs
+        while True:
+            if not self.songs:
+                # reinit to start the playlist over again
+                self.__init__(self.directory_path)
+            song = self.songs.pop()
+            # write out the song that's about to play
+            self.write_song(song)
+            # this blocks until the song has finished
+            subprocess.run(["cvlc", self.directory_path + song, "--play-and-exit"])
 
-def loop():
-    # start playing music
-    # note: there is no way to specify a specific rhythmbox playlist, this will play all songs in
-    # the folder that rhythmbox checks for music
-    subprocess.run(["rhythmbox-client", "--play"])
-    song = get_song()
-    write_song(song)
-    while True:
-        new_song = get_song()
-        if song != new_song:
-            write_song(new_song)
-            song = new_song
-        time.sleep(1)
+    def play(self):
+        song = self.songs.pop()
+        print(f"playing song {song}")
+        subprocess.run(["cvlc", song, "--play-and-exit"])
+        print("done playing")
+
+    def write_song(self, song):
+        file = open("resources/current_song.txt", "w")
+        # trim off the .mp3 file extension
+        file.write(f"Music by Gamechops | {song[:-4]} | ")
+        file.close()
+
+def play():
+    MusicHandler("/home/sharie/Music/test/")
