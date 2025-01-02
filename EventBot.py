@@ -24,7 +24,7 @@ class EventBot(commands.Bot):
         count = len(await self.user.fetch_subscriptions(token = self.broadcaster_token))
         with open("resources/subscriberCount.txt", "w") as file:
             file.write(str(count - 2))
-       
+
         # subscribe to event notifications
         try:
             await eventsub_client.subscribe_channel_raid(token = self.broadcaster_token, to_broadcaster = self.channel)
@@ -33,15 +33,9 @@ class EventBot(commands.Bot):
         except Exception as exception:
             print(f"Error subscribing to event: {exception}")
 
-    # TODO: this doesn't seem to be working...
     async def event_eventsub_notification_raid(self, event: eventsub.NotificationEvent):
         if not isinstance(event.data, eventsub.ChannelRaidData):
             return
-        channel = self.get_channel(self.channel)
-        if channel is None:
-            return
-
-        await channel.send(f"Thank you for the raid {event.data.raider.name}! How was your stream?")
         await self.user.shoutout(token = self.broadcaster_token, to_broadcaster_id = event.data.raider.id, moderator_id = int(self.broadcaster_id))
 
     async def event_eventsub_notification_followV2(self, event: eventsub.NotificationEvent):

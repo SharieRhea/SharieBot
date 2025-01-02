@@ -1,4 +1,3 @@
-import subprocess
 import asyncio
 import aiosqlite as sql
 from twitchio.ext import commands
@@ -23,7 +22,7 @@ class Bot(commands.Bot):
         self.update_idiot_genius_bar()
 
     async def event_ready(self):
-        print(f"Logged in as as {self.nick}")
+        print(f"Logged in as {self.nick}")
         # start the routine
         self.socials_routine.start()
 
@@ -33,7 +32,7 @@ class Bot(commands.Bot):
         channel = self.get_channel(self.channel)
         if channel is not None:
             await channel.send(f"/me Check out all of Sharie's socials here: https://linktr.ee/shariemakesart")
-    
+
     # social related commands
     @commands.command()
     async def discord(self, context: commands.Context):

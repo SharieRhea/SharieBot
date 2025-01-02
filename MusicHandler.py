@@ -29,9 +29,7 @@ class MusicHandler:
 
     def play(self):
         song = self.songs.pop()
-        print(f"playing song {song}")
         subprocess.run(["cvlc", song, "--play-and-exit"])
-        print("done playing")
 
     def write_song(self, song):
         file = open("resources/current_song.txt", "w")
@@ -39,5 +37,6 @@ class MusicHandler:
         file.write(f"Music by Gamechops | {song[:-4]} | ")
         file.close()
 
+# create a music handler instance and start playing from the provided directory
 def play():
-    MusicHandler("/home/sharie/Music/test/")
+    MusicHandler("/home/sharie/Music/stream/")
