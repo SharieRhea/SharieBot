@@ -6,7 +6,7 @@
 * obsws: `pip install obsws-python`
 * aiosqlite: `pip install aiosqlite`
 
-* You must have [OBS](https://obsproject.com/) installed and open before running the program.
+* You must have [OBS](https://obsproject.com/) installed and *open* before running the program.
 * You must have [VLC](https://www.videolan.org/vlc/) installed.
 
 ### Environment Variables
@@ -20,7 +20,7 @@
 
 ## Features
 * Informational text commands
-* Eventsub event handling (raids, follows, subscriptions)
+* Eventsub event handling (raids, follows, subscriptions, point redemptions)
 * OBS integration for automatic scene switching
 * Sqlite database for storing and retrieving quotes
-* Plays .mp3 music files using cvlc, a headless version of VLC
+* Support for playing .mp3 music files using VLC
