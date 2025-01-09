@@ -20,7 +20,7 @@ def main():
     # initialize websocket client for OBS
     obs_client = OBSClient()
     # initialize the jukebox for music
-    jukebox = Jukebox(MUSIC_DIRECTORY + "chill/")
+    jukebox = Jukebox(MUSIC_DIRECTORY, "chill/")
 
     # register a bot under the moderator account
     bot = Bot(MODERATOR_TOKEN, "!", CHANNEL, obs_client, jukebox)
