@@ -19,12 +19,12 @@ class EventBot(commands.Bot):
     async def __ainit__(self, eventsub_client: EventSubWSClient):
         # write current follower count to file for OBS to read
         count = await self.user.fetch_channel_follower_count()
-        with open("resources/followerCount.txt", "w") as file:
+        with open("resources/follower_count.txt", "w") as file:
             file.write(str(count))
         
         # write current subscriber count to file for OBS to read
         count = len(await self.user.fetch_subscriptions(token = self.broadcaster_token))
-        with open("resources/subscriberCount.txt", "w") as file:
+        with open("resources/subscriber_count.txt", "w") as file:
             file.write(str(count - 2))
 
         # subscribe to event notifications

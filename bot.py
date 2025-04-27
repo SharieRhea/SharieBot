@@ -1,4 +1,3 @@
-import asyncio
 import aiosqlite as sql
 from twitchio.ext import commands
 from twitchio.ext import routines
@@ -13,12 +12,11 @@ class Bot(commands.Bot):
         self.channel = channel
         self.obs_client = obs_client
         self.jukebox = jukebox
-        self.broadcaster_only = ["adbreak", "addquote", "commands"]
-        self.idiot_genius_counter = 0
+        self.today_text = "Sharie has not updated today's tasks yet!"
+        self.broadcaster_only = ["addquote", "commands", "updatetoday"]
 
     async def __ainit__(self):
         self.database = await sql.connect("database.db")
-        self.update_idiot_genius_bar()
 
     async def event_ready(self):
         print(f"INFO: Logged in as {self.nick}")
@@ -57,7 +55,7 @@ class Bot(commands.Bot):
 
     @commands.command(aliases = ["FAQ"])
     async def faq(self, context: commands.Context):
-        await context.send(f"The answer to all your questions... https://tinyurl.com/faqshariemakesart")
+        await context.send(f"The answer to all your questions... https://sharierhea.dev/faq")
 
     # database related commands
     @commands.command()
@@ -84,23 +82,11 @@ class Bot(commands.Bot):
     @commands.command(aliases = ["colorscheme"])
     async def theme(self, context: commands.Context):
         # check the last line of the init.lua for the theme
-        with open("/home/sharie/.config/nvim/init.lua", "rb") as file:
-            # seek to the very end of the file
-            file.seek(0, 2)
-            # move backwards until a newline is found
-            while file.read(1) != b'\n':
-                file.seek(-2, 1)
+        with open("/home/sharie/.local/share/nvim/themery/state.json", "rb") as file:
             line = file.readline()
-            theme = line.decode().split("\"")[1]
-            await context.send(f"@{context.author.name} {theme}")
-
-    @commands.command()
-    async def quishing(self, context: commands.Context):
-       await context.send(f"@{context.author.name} quishing is QR phishing: the use of fraudulent or malicious QR codes")
-
-    @commands.command()
-    async def timer(self, context: commands.Context):
-       await context.send(f"@{context.author.name} the timer shows how long I've been working on the current project!")
+            entries = line.decode().split("\"")
+            index = entries.index("colorscheme")
+            await context.send(f"@{context.author.name} {entries[index + 2]}")
 
     @commands.command()
     async def lurk(self, context: commands.Context):
@@ -118,40 +104,9 @@ class Bot(commands.Bot):
                 commands_list.append(command)
         await context.send("Current commands: " + ", ".join(commands_list))
 
-    @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.channel)
     @commands.command()
-    async def idiot(self, context: commands.Context):
-        if self.idiot_genius_counter <= -5:
-            await context.send("Maximum idiot levels achieved! Maybe it's time to stop coding for the day...")
-            self.idiot_genius_counter = 0
-            self.update_idiot_genius_bar()
-            return
-        self.idiot_genius_counter -= 1
-        self.update_idiot_genius_bar()
-        await context.send(f"@{context.author.name} has changed the idiot/genius counter to {self.idiot_genius_counter}!")
-
-    @commands.cooldown(rate=1, per=30, bucket=commands.Bucket.channel)
-    @commands.command()
-    async def genius(self, context: commands.Context):
-        if self.idiot_genius_counter >= 5:
-            await context.send("Maximum genius levels achieved! Time to apply to Google")
-            self.idiot_genius_counter = 0
-            self.update_idiot_genius_bar()
-            return
-        self.idiot_genius_counter += 1
-        self.update_idiot_genius_bar()
-        await context.send(f"@{context.author.name} has changed the idiot/genius counter to {self.idiot_genius_counter}!")
-        
-    # utility command for creating the idiot:genius bar for OBS
-    def update_idiot_genius_bar(self):
-        with open("resources/idiotgenius.txt", "w") as file:
-            file.write("idiot: ")
-            for i in range(-5, 6):
-                if i == self.idiot_genius_counter:
-                    file.write("╋")
-                else:
-                    file.write("━")
-            file.write(" :genius")
+    async def today(self, context: commands.Context):
+        await context.send(f"Today's tasks/TODO: {self.today_text}")
 
     # broadcaster only commands
     @commands.command()
@@ -160,16 +115,6 @@ class Bot(commands.Bot):
             await context.send("Hey, you're not supposed to do that!")
             return
         self.jukebox.next()
-
-    @commands.command()
-    async def adbreak(self, context: commands.Context):
-        if context.author.name != self.channel:
-            await context.send("Hey, you're not supposed to do that!")
-            return
-        self.obs_client.switch_to_scene("ads")
-        # ad breaks are set to 90 seconds
-        await asyncio.sleep(90)
-        self.obs_client.switch_to_scene("content")
 
     @commands.command()
     async def addquote(self, context: commands.Context, text: str):
@@ -181,6 +126,15 @@ class Bot(commands.Bot):
         await self.database.commit()
 
         await context.send("Quote added!")
+
+    @commands.command()
+    async def updatetoday(self, context: commands.Context, text: str):
+        if context.author.name != self.channel:
+            await context.send("Hey, you're not supposed to do that!")
+            return
+
+        self.today_text = text;
+        await context.send("Today updated!")
 
     # override error handling
     async def event_command_error(self, context: commands.Context, error: Exception):
