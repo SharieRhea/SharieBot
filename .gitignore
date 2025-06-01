@@ -5,5 +5,8 @@ urls.txt
 venv/
 __pycache__/
 
-# ignore OBS text files
+# ignore OBS text and image files
 resources/
+
+# ignore the database
+database.db

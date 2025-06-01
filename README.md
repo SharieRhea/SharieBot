@@ -1,10 +1,13 @@
 # SharieBot
 
 ## Requirements
-* twitchio: `pip install twitchio`
-* dotenv: `pip install python-dotenv`
-* obsws: `pip install obsws-python`
-* aiosqlite: `pip install aiosqlite`
+* twitchio for bot basics, events, etc: `pip install twitchio`
+* dotenv for configuration: `pip install python-dotenv`
+* obsws to connect to obs: `pip install obsws-python`
+* aiosqlite for storing quotes in the database: `pip install aiosqlite`
+* pynvim to launch nvim to pull current theme colors: `pip install pynvim`
+* cairosvg to convert svg to png: `pip install cairosvg`
+* rich to render terminal output to svg: `pip install rich`
 
 * You must have [OBS](https://obsproject.com/) installed and *open* before running the program.
 * You must have [VLC](https://www.videolan.org/vlc/) installed.

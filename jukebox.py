@@ -2,6 +2,9 @@ import os
 import asyncio
 import random
 
+from image_utils import update_image
+
+
 class Jukebox:
     def __init__(self, root_directory_path, sub_directory_path):
         self.root_directory_path = root_directory_path
@@ -9,6 +12,7 @@ class Jukebox:
         # pull all files from this directory
         self.songs = []
         self.running_song = None
+        self.playing = True
         self.populate_queue()
 
     def populate_queue(self):
@@ -19,7 +23,7 @@ class Jukebox:
 
     def start(self):
         # begin an endless loop of playing songs
-        while True:
+        while self.playing:
             if not self.songs:
                 # reinit to start the playlist over again
                 self.populate_queue()
@@ -30,22 +34,29 @@ class Jukebox:
             self.running_song = asyncio.run(self.play(song))
 
     async def play(self, song):
-        self.running_song = await asyncio.create_subprocess_exec("cvlc", song, "--play-and-exit", "--quiet")
+        self.running_song = await asyncio.create_subprocess_exec(
+            "cvlc", song, "--play-and-exit", "--quiet"
+        )
         await self.running_song.communicate()
 
+    async def pause(self):
+        if self.running_song:
+            self.running_song.kill()
+        self.playing = False
+
     def write_song(self, song):
-        file = open("resources/current_song.txt", "w")
         song = song.split("/")[-1]
-        # trim off the .mp3 file extension
         if song[-4:] == ".mp3":
             song = song[:-4]
-        file.write(f"Music by Gamechops | {song} | ")
-        file.close()
+        title, artist = song.split(" - ")
+        update_image(title, artist, "music")
 
     # add this song as the next song to be played
     def add_song(self, song):
         for sub_directory in os.listdir(self.root_directory_path):
-            new_path = self.root_directory_path + "/" + sub_directory + "/" + song + ".mp3"
+            new_path = (
+                self.root_directory_path + "/" + sub_directory + "/" + song + ".mp3"
+            )
             if os.path.isfile(new_path):
                 self.songs.insert(0, new_path)
                 return True
