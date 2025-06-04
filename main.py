@@ -4,6 +4,7 @@ from twitchio.ext import eventsub
 from threading import Thread
 from bot import Bot
 from eventbot import EventBot
+from image_utils import ColorTracker
 from obsclient import OBSClient
 from jukebox import Jukebox
 
@@ -17,6 +18,9 @@ def main():
     MODERATOR_ID = os.environ["MODERATOR_ID"]
     MODERATOR_TOKEN = os.environ["MODERATOR_TOKEN"]
     MUSIC_DIRECTORY = os.environ["MUSIC_DIRECTORY"]
+
+    # initialize colors
+    ColorTracker()
 
     # initialize websocket client for OBS
     obs_client = OBSClient()
@@ -34,8 +38,12 @@ def main():
     bot.loop.run_until_complete(event_sub_bot.__ainit__(event_sub_client))
 
     # start up a thread for playing music
-    thread = Thread(target=jukebox.start)
-    thread.start()
+    music = Thread(target=jukebox.start)
+    music.start()
+
+    # start up a thread for watching colorscheme changes
+    colorscheme = Thread(target=event_sub_bot.watch_colorscheme_change)
+    colorscheme.start()
 
     # begin main event loop
     bot.run()

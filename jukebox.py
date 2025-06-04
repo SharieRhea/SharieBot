@@ -2,7 +2,7 @@ import os
 import asyncio
 import random
 
-from image_utils import update_image
+from image_utils import ColorTracker
 
 
 class Jukebox:
@@ -13,6 +13,9 @@ class Jukebox:
         self.songs = []
         self.running_song = None
         self.playing = True
+
+        self.colortracker = ColorTracker()
+
         self.populate_queue()
 
     def populate_queue(self):
@@ -48,8 +51,8 @@ class Jukebox:
         song = song.split("/")[-1]
         if song[-4:] == ".mp3":
             song = song[:-4]
-        title, artist = song.split(" - ")
-        update_image(title, artist, "music")
+        self.title, self.artist = song.split(" - ")
+        self.update_image()
 
     # add this song as the next song to be played
     def add_song(self, song):
@@ -61,6 +64,9 @@ class Jukebox:
                 self.songs.insert(0, new_path)
                 return True
         return False
+
+    def update_image(self):
+        self.colortracker.update_image(self.title, self.artist, "music")
 
     def next(self):
         if self.running_song is not None:

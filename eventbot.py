@@ -1,9 +1,11 @@
+from os.path import getmtime
+from time import sleep
 from twitchio.ext import commands
 from twitchio.ext import eventsub
 from twitchio.ext.eventsub.websocket import EventSubWSClient
 
 from bot import Bot
-from image_utils import update_image, update_notification_image
+from image_utils import ColorTracker
 from jukebox import Jukebox
 from obsclient import OBSClient
 
@@ -30,23 +32,34 @@ class EventBot(commands.Bot):
         self.jukebox = jukebox
         self.obs_client = obs_client
 
+        self.follower = ""
+        self.subscriber = ""
+        self.follwers = 0
+        self.subscribers = 0
+
+        self.colortracker = ColorTracker()
+
     async def __ainit__(self, eventsub_client: EventSubWSClient):
         # update follower count and image
-        count = await self.user.fetch_channel_follower_count()
+        self.followers = await self.user.fetch_channel_follower_count()
         with open("resources/follower_count.txt", "w") as file:
-            file.write(str(count))
+            file.write(str(self.followers))
         with open("resources/recent_follower.txt", "r") as file:
-            username = file.readline()
-            update_image(str(count), username, title="followers")
+            self.follower = file.readline()
+            self.colortracker.update_image(
+                str(self.followers), self.follower, title="followers"
+            )
         # update subscriber count and image
-        count = (
+        self.subscribers = (
             len(await self.user.fetch_subscriptions(token=self.broadcaster_token)) - 2
         )
         with open("resources/subscriber_count.txt", "w") as file:
-            file.write(str(count))
+            file.write(str(self.subscribers))
         with open("resources/recent_subscriber.txt", "r") as file:
-            username = file.readline()
-            update_image(str(count), username, "subscribers")
+            self.subscriber = file.readline()
+            self.colortracker.update_image(
+                str(self.subscribers), self.subscriber, "subscribers"
+            )
 
         # subscribe to event notifications
         try:
@@ -63,13 +76,29 @@ class EventBot(commands.Bot):
             )
             # subscribe only to "play song" redemptions
             await eventsub_client.subscribe_channel_points_redeemed(
-                broadcaster=self.broadcaster_id,
-                token=self.broadcaster_token,
-                reward_id="6d988bcc-703a-4b38-b45a-17cda9a1757e",
+                broadcaster=self.broadcaster_id, token=self.broadcaster_token
             )
             print(f"INFO: finished subscribing to events")
         except Exception as exception:
             print(f"ERROR: could not subscribe to event: {exception}")
+
+    def watch_colorscheme_change(self):
+        # infinitely watch the colorscheme.txt file for changes
+        modifiedtime = getmtime("/home/sharie/.config/nvim/colorscheme.txt")
+        while True:
+            newtime = getmtime("/home/sharie/.config/nvim/colorscheme.txt")
+            if newtime != modifiedtime:
+                modifiedtime = newtime
+                self.colortracker.update_colors()
+                sleep(0.1)
+                self.colortracker.update_image(
+                    str(self.followers), self.follower, title="followers"
+                )
+                self.colortracker.update_image(
+                    str(self.subscribers), self.subscriber, "subscribers"
+                )
+                self.jukebox.update_image()
+            sleep(1)
 
     # this function name is important, it's how the library knows which function to pass the notification to
     async def event_eventsub_notification(self, event: eventsub.NotificationEvent):
@@ -92,7 +121,7 @@ class EventBot(commands.Bot):
             to_broadcaster_id=payload.raider.id,
             moderator_id=int(self.broadcaster_id),
         )
-        update_notification_image(
+        self.colortracker.update_notification_image(
             f"{payload.raider.name} just raided with {payload.viewer_count} viewers!",
             "raid",
         )
@@ -100,36 +129,45 @@ class EventBot(commands.Bot):
 
     async def follow_received(self, payload: eventsub.ChannelFollowData):
         # write username to file for OBS to read
-        username = payload.user.name
-        if not username:
+        if not payload.user.name:
             return
+        self.follower = payload.user.name
 
         with open("resources/recent_follower.txt", "w") as file:
-            file.write(username)
-        count = await self.user.fetch_channel_follower_count()
+            file.write(self.follower)
+        self.followers = await self.user.fetch_channel_follower_count()
         with open("resources/follower_count.txt", "w") as file:
-            file.write(str(count))
+            file.write(str(self.followers))
 
-        update_image(str(count), username, "followers")
-        update_notification_image(f"{username} just followed!", "follow")
+        self.colortracker.update_image(str(self.followers), self.follower, "followers")
+        self.colortracker.update_notification_image(
+            f"{self.follower} just followed!", "follow"
+        )
         await self.obs_client.display_notification()
 
     async def subscription_received(self, payload: eventsub.ChannelSubscribeData):
         # write username to file for OBS to read
-        username = payload.user.name
-        if username is None:
+        if not payload.user.name:
             return
+        self.subscriber = payload.user.name
+
         with open("resources/recent_subscriber.txt", "w") as file:
-            file.write(username)
+            file.write(self.subscriber)
 
         # write current subscriber count to file for OBS to read
-        count = len(await self.user.fetch_subscriptions(token=self.broadcaster_token))
+        self.subscribers = (
+            len(await self.user.fetch_subscriptions(token=self.broadcaster_token)) - 2
+        )
         with open("resources/subscriber_count.txt", "w") as file:
-            file.write(str(count - 2))
+            file.write(str(self.subscribers))
 
-        update_image(str(count), username, "subscribers")
+        self.colortracker.update_image(
+            str(self.subscribers), self.subscriber, "subscribers"
+        )
         tier = payload.tier
-        update_notification_image(f"{username} just subscribed at tier {tier}!", "subscription")
+        self.colortracker.update_notification_image(
+            f"{self.subscriber} just subscribed at tier {tier}!", "subscription"
+        )
         await self.obs_client.display_notification()
 
     # TODO: subscribe to ChannelSubscriptionMessage, this is the one with cumulative months etc
@@ -137,11 +175,16 @@ class EventBot(commands.Bot):
     async def points_redeemed(
         self, payload: eventsub.CustomRewardRedemptionAddUpdateData
     ):
-        if self.jukebox.add_song(payload.input.strip()):
-            await self.bot.send(
-                f"@{payload.user.name} {payload.input} was added to the queue!"
-            )
-        else:
-            await self.bot.send(
-                f"@{payload.user.name} {payload.input} does not exist or had invalid formatting"
-            )
+        self.colortracker.update_notification_image(
+            f"{payload.user.name} redeemed {payload.reward.title}!", "point redemption"
+        )
+        await self.obs_client.display_notification()
+        if payload.id == "6d988bcc-703a-4b38-b45a-17cda9a1757e":
+            if self.jukebox.add_song(payload.input.strip()):
+                await self.bot.send(
+                    f"@{payload.user.name} {payload.input} was added to the queue!"
+                )
+            else:
+                await self.bot.send(
+                    f"@{payload.user.name} {payload.input} does not exist or had invalid formatting"
+                )
