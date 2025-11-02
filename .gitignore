@@ -1,12 +1,10 @@
-# ignore user specific environment variables such as access token
-.env
-urls.txt
-
+# python stuff
 venv/
 __pycache__/
 
-# ignore OBS text and image files
-resources/
+# databases
+quotes.db
+tokens.db
 
-# ignore the database
-database.db
+# user specific environment variables
+.env
