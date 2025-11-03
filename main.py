@@ -97,6 +97,12 @@ class Bot(commands.AutoBot):
     async def event_ready(self) -> None:
         LOGGER.info("Successfully logged in as: %s", self.bot_id)
 
+    async def event_command_error(self, payload: commands.CommandErrorPayload) -> None:
+        # check if this was a command not found
+        if isinstance(payload.exception, commands.CommandNotFound):
+            await payload.context.reply("We don't have that command yet! Maybe this will make me add it.")
+        return await super().event_command_error(payload)
+
 
 class MyComponent(commands.Component):
     # An example of a Component with some simple commands and listeners
@@ -114,11 +120,15 @@ class MyComponent(commands.Component):
     async def event_message(self, payload: twitchio.ChatMessage) -> None:
         print(f"[{payload.broadcaster.name}] - {payload.chatter.name}: {payload.text}")
 
-        # generic fallback for an unknown command
-        if payload.text.startswith(str(self.bot._get_prefix)):
-            command_name = payload.text.split(" ")[0][len(str(self.bot._get_prefix)):]
-            if command_name not in self.__all_commands__:
-                await self.bot.get_context(payload).reply("We don't have that command yet!")
+    @commands.command(aliases=["commands"])
+    async def command(self, ctx: commands.Context) -> None:
+        """Replies with a list of the available commands."""
+        await ctx.reply("The available commands are: discord | youtube | github | socials | faq | lurk | quote {number} | sharie")
+
+    @commands.command()
+    async def sharie(self, ctx: commands.Context) -> None:
+        """Replies with an explanation of 'Sharie'."""
+        await ctx.reply("twilight__world's real name is 'Sharie' pronounced 'shar-ee' just like the marker 'sharpie'.")
 
     @commands.command()
     async def discord(self, ctx: commands.Context) -> None:
@@ -167,7 +177,13 @@ class MyComponent(commands.Component):
             await ctx.reply("Quote not found!")
             return
 
-        await ctx.reply(f'"{data[0]}" - {data[1]}')
+        await ctx.reply(f'"{data[0]}" - Sharie, {data[1]}')
+
+    @quote.error
+    async def quote_error(self, payload: commands.CommandErrorPayload):
+        # if a user does something like !quote askldjf or !quote five, just reply with a random one
+        if isinstance(payload.exception, commands.BadArgument):
+            await self.quote(payload.context)
 
     @commands.command()
     async def addquote(self, ctx: commands.Context, text: str) -> None:
